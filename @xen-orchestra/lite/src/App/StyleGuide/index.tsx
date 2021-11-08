@@ -1,3 +1,6 @@
+// https://mui.com/components/material-icons/
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DeleteIcon from '@mui/icons-material/Delete'
 import React from 'react'
 import styled from 'styled-components'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -5,7 +8,9 @@ import { materialDark as codeStyle } from 'react-syntax-highlighter/dist/esm/sty
 import { withState } from 'reaclette'
 
 import Button from '../../components/Button'
+import Checkbox from '../../components/Checkbox'
 import Icon from '../../components/Icon'
+import Input from '../../components/Input'
 
 interface ParentState {}
 
@@ -57,10 +62,42 @@ const App = withState<State, Props, Effects, Computed, ParentState, ParentEffect
       <h2>Button</h2>
       <Container>
         <Render>
-          <Button onClick={effects.sayHello}>Button</Button>
+          <Button color='primary' onClick={effects.sayHello} startIcon={<AccountCircleIcon />}>
+            Primary
+          </Button>
+          <Button color='secondary' endIcon={<DeleteIcon />} onClick={effects.sayHello}>
+            Secondary
+          </Button>
+          <Button color='success' onClick={effects.sayHello}>
+            Success
+          </Button>
+          <Button color='warning' onClick={effects.sayHello}>
+            Warning
+          </Button>
+          <Button color='error' onClick={effects.sayHello}>
+            Error
+          </Button>
+          <Button color='info' onClick={effects.sayHello}>
+            Info
+          </Button>
         </Render>
-        <Code>{`<Button onClick={doSomething}>
-  Button
+        <Code>{`<Button color='primary' onClick={doSomething} startIcon={<AccountCircleIcon />}>
+  Primary
+</Button>
+<Button color='secondary' endIcon={<DeleteIcon />} onClick={doSomething}>
+  Secondary
+</Button>
+<Button color='success' onClick={doSomething}>
+  Success
+</Button>
+<Button color='warning' onClick={doSomething}>
+  Warning
+</Button>
+<Button color='error' onClick={doSomething}>
+  Error
+</Button>
+<Button color='info' onClick={doSomething}>
+  Info
 </Button>`}</Code>
       </Container>
       <h2>Icon</h2>
@@ -72,6 +109,15 @@ const App = withState<State, Props, Effects, Computed, ParentState, ParentEffect
         <Code>{`// https://fontawesome.com/icons
 <Icon icon='truck' />
 <Icon icon='truck' size='2x' />`}</Code>
+      </Container>
+      <h2>Input</h2>
+      <Container>
+        <Render>
+          <Input label='Input' />
+          <Checkbox />
+        </Render>
+        <Code>{`<TextInput label='Input' />
+<Checkbox />`}</Code>
       </Container>
     </Page>
   )
