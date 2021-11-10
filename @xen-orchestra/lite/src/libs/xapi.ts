@@ -31,7 +31,6 @@ export interface PifMetrics extends XapiObject {
 
 export interface Pif extends XapiObject {
   $network: Network
-  metrics: string
   bond_slave_of: string
   device: string
   DNS: string
@@ -39,6 +38,7 @@ export interface Pif extends XapiObject {
   host: string
   IP: string
   management: boolean
+  metrics: string
   network: string
   VLAN: number
 }
