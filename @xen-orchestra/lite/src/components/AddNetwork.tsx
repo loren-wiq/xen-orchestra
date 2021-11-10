@@ -1,18 +1,18 @@
 import AddIcon from '@mui/icons-material/Add'
-import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore'
 import React from 'react'
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore'
 import { Map } from 'immutable'
+import { SelectChangeEvent } from '@mui/material'
 import { withState } from 'reaclette'
 
 import Button from './Button'
+import Checkbox from './Checkbox'
 import Input from './Input'
 import IntlMessage from './IntlMessage'
 import Select from './Select'
 import { alert } from './Modal'
 
 import XapiConnection, { ObjectsByType, Pif, PifMetrics } from '../libs/xapi'
-import Checkbox from './Checkbox'
-import { SelectChangeEvent } from '@mui/material'
 
 interface ParentState {
   objectsByType: ObjectsByType
@@ -51,15 +51,15 @@ interface Computed {
   pifsMetrics?: Map<string, PifMetrics>
 }
 
-const OPTION_PIF_RENDERER = (pif: Pif, { pifsMetrics }: any) =>
-  `${pif.device} (${pifsMetrics.find((metrics: PifMetrics) => metrics.$ref === pif.metrics)?.device_name ?? 'unknown'})`
-
-const BOND_MODE = ['balance-slb', 'active-backup', 'lacp']
+const BOND_MODE = ['active-backup', 'balance-slb', 'lacp']
 
 const BUTTON_STYLES = {
   marginRight: 1,
   width: 'fit-content',
 }
+
+const OPTION_PIF_RENDERER = (pif: Pif, { pifsMetrics }: { pifsMetrics: Computed['pifsMetrics'] }) =>
+  `${pif.device} (${pifsMetrics?.find(metrics => metrics.$ref === pif.metrics)?.device_name ?? 'unknown'})`
 
 const INPUT_STYLES = {
   marginBottom: 2,
@@ -93,7 +93,7 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
       _createNetwork: async function (e) {
         e.preventDefault()
         if (this.state.isLoading) {
-          return alert({ message: <p>Network is already in creation</p>, title: <IntlMessage id='networkCreation' /> })
+          return
         }
         this.state.isLoading = true
         const { bondMode, description, mtu, nameLabel, pifsId, vlan } = this.state.form
@@ -228,10 +228,15 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
             helperText={<IntlMessage id='vlanPlaceholder' />}
           />
         )}
-        <Button type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
+        <Button disabled={state.isLoading} type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
           <IntlMessage id='create' />
         </Button>
-        <Button onClick={effects._resetForm} sx={BUTTON_STYLES} startIcon={<SettingsBackupRestoreIcon />}>
+        <Button
+          disabled={state.isLoading}
+          onClick={effects._resetForm}
+          sx={BUTTON_STYLES}
+          startIcon={<SettingsBackupRestoreIcon />}
+        >
           <IntlMessage id='reset' />
         </Button>
       </form>
