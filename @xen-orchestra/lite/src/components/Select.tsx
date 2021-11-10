@@ -1,56 +1,81 @@
+import FormControl from '@mui/material/FormControl'
+import MenuItem from '@mui/material/MenuItem'
 import React from 'react'
+import SelectMaterialUi, { SelectProps } from '@mui/material/Select'
+import { iteratee } from 'lodash'
+import { SelectChangeEvent } from '@mui/material'
+import { withState } from 'reaclette'
+
 import IntlMessage from './IntlMessage'
 
-import intl from '../lang/en.json'
-import { withState } from 'reaclette'
-import styled from 'styled-components'
-
-export type Options<T> = {
-  render: { (item: T, additionalProps?: AdditionalProps): React.ReactNode }
-  value: { (item: T, additionalProps?: AdditionalProps): string | number | readonly string[] | undefined }
-}
-
-type AdditionalProps = { [key: string]: any }
+type AdditionalProps = Record<string, any>
 
 interface ParentState {}
 
 interface State {}
 
-interface Props extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  additionalProps?: Record<string, any>
-  collection?: unknown[]
-  optionsRender: Options<any>
-  placeholder?: keyof typeof intl
+interface Props extends SelectProps {
+  additionalProps?: AdditionalProps
+  onChange: (e: SelectChangeEvent<unknown>) => void
+  optionRenderer?: string | { (item: any, additionalProps: any): number | string }
+  options: any[] | undefined
+  value: any
+  valueRenderer?: string | { (item: any, additionalProps: any): number | string }
 }
 
 interface ParentEffects {}
 
 interface Effects {}
 
-interface Computed {}
-
-const StyledSelect = styled.select`
-background-color: #e4dfdf;
-  padding: 5px;
-`
-const StylesOption = styled.option`
-`
+interface Computed {
+  renderOption: (item: any, additionalProps?: AdditionalProps) => React.ReactNode
+  renderValue: (item: any, additionalProps?: AdditionalProps) => number | string
+  options?: JSX.Element[]
+}
 
 const Select = withState<State, Props, Effects, Computed, ParentState, ParentEffects>(
-  {},
-  ({ additionalProps, collection, effects, multiple, optionsRender, placeholder, resetState, state, ...props }) => (
-    <StyledSelect multiple={multiple} {...props}>
-      {!multiple && (
-        <IntlMessage id={placeholder ?? 'selectChoice'}>
-          {message => <StylesOption value=''>{message}</StylesOption>}
-        </IntlMessage>
-      )}
-      {collection?.map((item, index) => (
-        <StylesOption key={index} value={optionsRender.value(item, additionalProps)}>
-          {optionsRender.render(item, additionalProps)}
-        </StylesOption>
-      ))}
-    </StyledSelect>
+  {
+    computed: {
+      // @ts-ignore
+      renderOption: (_, { optionRenderer }) => iteratee(optionRenderer),
+      // @ts-ignore
+      renderValue: (_, { valueRenderer }) => iteratee(valueRenderer),
+      options: (state, { additionalProps, options, optionRenderer, valueRenderer }) =>
+        options?.map(item => {
+          const label =
+            optionRenderer === undefined
+              ? item.name ?? item.label ?? item.name_label ?? item
+              : state.renderOption(item, additionalProps)
+          const value =
+            valueRenderer === undefined
+              ? item.value ?? item.id ?? item.$id ?? item
+              : state.renderValue(item, additionalProps)
+
+          if (value === undefined) {
+            console.error('Computed value is undefined')
+          }
+
+          return (
+            <MenuItem key={value} value={value}>
+              {label}
+            </MenuItem>
+          )
+        }),
+    },
+  },
+  ({ additionalProps, displayEmpty = true, effects, multiple, options, required, resetState, state, ...props }) => (
+    <FormControl>
+      <SelectMaterialUi multiple={multiple} required={required} displayEmpty={displayEmpty} {...props}>
+        {!multiple && (
+          <MenuItem value=''>
+            <em>
+              <IntlMessage id='none' />
+            </em>
+          </MenuItem>
+        )}
+        {state.options}
+      </SelectMaterialUi>
+    </FormControl>
   )
 )
 

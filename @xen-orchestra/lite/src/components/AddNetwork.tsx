@@ -7,11 +7,12 @@ import { withState } from 'reaclette'
 import Button from './Button'
 import Input from './Input'
 import IntlMessage from './IntlMessage'
-import Select, { Options } from './Select'
+import Select from './Select'
 import { alert } from './Modal'
 
 import XapiConnection, { ObjectsByType, Pif, PifMetrics } from '../libs/xapi'
 import Checkbox from './Checkbox'
+import { SelectChangeEvent } from '@mui/material'
 
 interface ParentState {
   objectsByType: ObjectsByType
@@ -39,7 +40,7 @@ interface ParentEffects {}
 
 interface Effects {
   _createNetwork: React.FormEventHandler<HTMLFormElement>
-  _handleChange: (e: React.ChangeEvent<any>) => void
+  _handleChange: (e: SelectChangeEvent<unknown> | React.ChangeEvent<{ name: string; value: unknown }>) => void
   _resetForm: () => void
   _toggleBonded: () => void
 }
@@ -50,19 +51,8 @@ interface Computed {
   pifsMetrics?: Map<string, PifMetrics>
 }
 
-const OPTIONS_RENDER_PIF: Options<Pif> = {
-  render: (pif, additionalProps) =>
-    `${pif.device} (${
-      additionalProps?.pifsMetrics?.find((metrics: PifMetrics) => metrics.$ref === pif.metrics)?.device_name ??
-      'unknown'
-    })`,
-  value: pif => pif.$id,
-}
-
-const OPTIONS_RENDER_BOND_MODE: Options<State['form']['bondMode']> = {
-  render: mode => mode,
-  value: mode => mode,
-}
+const OPTION_PIF_RENDERER = (pif: Pif, { pifsMetrics }: any) =>
+  `${pif.device} (${pifsMetrics.find((metrics: PifMetrics) => metrics.$ref === pif.metrics)?.device_name ?? 'unknown'})`
 
 const BOND_MODE = ['balance-slb', 'active-backup', 'lacp']
 
@@ -170,20 +160,23 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
           <IntlMessage id='bondedNetwork' />
         </label>
         <Checkbox checked={state.isBonded} name='bonded' onChange={effects._toggleBonded} />
-        {/* <label>
+        <div>
+          <label>
             <IntlMessage id='interface' />
-          </label> */}
-        {/* <Select
+          </label>
+          <br />
+          <Select
             additionalProps={{ pifsMetrics: state.pifsMetrics }}
             multiple={state.isBonded}
             name='pifsId'
             onChange={effects._handleChange}
+            optionRenderer={OPTION_PIF_RENDERER}
             options={state.collection}
-            optionsRender={OPTIONS_RENDER_PIF}
-            placeholder='selectPif'
             required={state.isBonded}
+            sx={INPUT_STYLES}
             value={state.form.pifsId}
-          /> */}
+          />
+        </div>
         <Input
           name='nameLabel'
           onChange={effects._handleChange}
@@ -211,18 +204,18 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
         />
         {state.isBonded ? (
           <div>
-            {/* <label>
+            <label>
               <IntlMessage id='bondMode' />
-            </label> */}
-            {/* <Select
+            </label>
+            <br />
+            <Select
               name='bondMode'
               onChange={effects._handleChange}
               options={BOND_MODE}
-              optionsRender={OPTIONS_RENDER_BOND_MODE}
-              placeholder='selectBondMode'
               required
+              sx={INPUT_STYLES}
               value={state.form.bondMode}
-            /> */}
+            />
           </div>
         ) : (
           <Input
