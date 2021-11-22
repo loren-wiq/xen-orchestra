@@ -117,20 +117,19 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
         }
         this.state.isLoading = false
       },
-      handleChange: function (e) {
+      handleChange: function ({ target: { name, value } }) {
         // Reason why form values are initialized with empty string and not a undefined value
         // Warning: A component is changing an uncontrolled input to be controlled.
         // This is likely caused by the value changing from undefined to a defined value,
         // which should not happen. Decide between using a controlled or uncontrolled input
         // element for the lifetime of the component.
         // More info: https://reactjs.org/link/controlled-components
-        const property = e.target.name
         const { form } = this.state
 
-        if (form[property] !== undefined) {
+        if (form[name] !== undefined) {
           this.state.form = {
             ...form,
-            [property]: e.target.value,
+            [name]: value,
           }
         }
       },
@@ -154,93 +153,91 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
     },
   },
   ({ effects, state }) => (
-    <>
-      <form onSubmit={effects.createNetwork}>
+    <form onSubmit={effects.createNetwork}>
+      <label>
+        <IntlMessage id='bondedNetwork' />
+      </label>
+      <Checkbox checked={state.isBonded} name='bonded' onChange={effects.toggleBonded} />
+      <div>
         <label>
-          <IntlMessage id='bondedNetwork' />
+          <IntlMessage id='interface' />
         </label>
-        <Checkbox checked={state.isBonded} name='bonded' onChange={effects.toggleBonded} />
+        <br />
+        <Select
+          additionalProps={{ pifsMetrics: state.pifsMetrics }}
+          multiple={state.isBonded}
+          name='pifsId'
+          onChange={effects.handleChange}
+          optionRenderer={OPTION_PIF_RENDERER}
+          options={state.collection}
+          required={state.isBonded}
+          sx={INPUT_STYLES}
+          value={state.form.pifsId}
+        />
+      </div>
+      <Input
+        name='nameLabel'
+        onChange={effects.handleChange}
+        required
+        value={state.form.nameLabel}
+        label={<IntlMessage id='name' />}
+        sx={INPUT_STYLES}
+      />
+      <Input
+        name='description'
+        onChange={effects.handleChange}
+        type='text'
+        value={state.form.description}
+        label={<IntlMessage id='description' />}
+        sx={INPUT_STYLES}
+      />
+      <Input
+        name='mtu'
+        onChange={effects.handleChange}
+        type='number'
+        value={state.form.mtu}
+        label={<IntlMessage id='mtu' />}
+        sx={INPUT_STYLES}
+        helperText={<IntlMessage id='defaultValue' values={{ value: 1500 }} />}
+      />
+      {state.isBonded ? (
         <div>
           <label>
-            <IntlMessage id='interface' />
+            <IntlMessage id='bondMode' />
           </label>
           <br />
           <Select
-            additionalProps={{ pifsMetrics: state.pifsMetrics }}
-            multiple={state.isBonded}
-            name='pifsId'
+            name='bondMode'
             onChange={effects.handleChange}
-            optionRenderer={OPTION_PIF_RENDERER}
-            options={state.collection}
-            required={state.isBonded}
+            options={BOND_MODE}
+            required
             sx={INPUT_STYLES}
-            value={state.form.pifsId}
+            value={state.form.bondMode}
           />
         </div>
+      ) : (
         <Input
-          name='nameLabel'
-          onChange={effects.handleChange}
-          required
-          value={state.form.nameLabel}
-          label={<IntlMessage id='name' />}
-          sx={INPUT_STYLES}
-        />
-        <Input
-          name='description'
-          onChange={effects.handleChange}
-          type='text'
-          value={state.form.description}
-          label={<IntlMessage id='description' />}
-          sx={INPUT_STYLES}
-        />
-        <Input
-          name='mtu'
+          name='vlan'
           onChange={effects.handleChange}
           type='number'
-          value={state.form.mtu}
-          label={<IntlMessage id='mtu' />}
+          value={state.form.vlan}
+          label={<IntlMessage id='vlan' />}
           sx={INPUT_STYLES}
-          helperText={<IntlMessage id='defaultValue' values={{ value: 1500 }} />}
+          helperText={<IntlMessage id='vlanPlaceholder' />}
         />
-        {state.isBonded ? (
-          <div>
-            <label>
-              <IntlMessage id='bondMode' />
-            </label>
-            <br />
-            <Select
-              name='bondMode'
-              onChange={effects.handleChange}
-              options={BOND_MODE}
-              required
-              sx={INPUT_STYLES}
-              value={state.form.bondMode}
-            />
-          </div>
-        ) : (
-          <Input
-            name='vlan'
-            onChange={effects.handleChange}
-            type='number'
-            value={state.form.vlan}
-            label={<IntlMessage id='vlan' />}
-            sx={INPUT_STYLES}
-            helperText={<IntlMessage id='vlanPlaceholder' />}
-          />
-        )}
-        <Button disabled={state.isLoading} type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
-          <IntlMessage id='create' />
-        </Button>
-        <Button
-          disabled={state.isLoading}
-          onClick={effects.resetForm}
-          sx={BUTTON_STYLES}
-          startIcon={<SettingsBackupRestoreIcon />}
-        >
-          <IntlMessage id='reset' />
-        </Button>
-      </form>
-    </>
+      )}
+      <Button disabled={state.isLoading} type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
+        <IntlMessage id='create' />
+      </Button>
+      <Button
+        disabled={state.isLoading}
+        onClick={effects.resetForm}
+        sx={BUTTON_STYLES}
+        startIcon={<SettingsBackupRestoreIcon />}
+      >
+        <IntlMessage id='reset' />
+      </Button>
+    </form>
   )
 )
 

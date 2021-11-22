@@ -222,14 +222,16 @@ export default class XapiConnection extends EventEmitter {
   ): Promise<void> {
     const pifs = this.objectsByType.get('PIF')
     const pifsId = opts?.pifsId
+    const isBonded = Array.isArray(pifsId)
     let networkRef: string | undefined
+
     try {
       networkRef = (await this.call('network.create', {
         ...newNetwork,
         other_config: { automatic: 'false' },
       })) as string
 
-      if (Array.isArray(pifsId)) {
+      if (isBonded) {
         await Promise.all(
           pifsId.map(pifId => this.call('Bond.create', networkRef, pifs?.get(pifId)?.$network.PIFs, '', opts?.bondMode))
         )
