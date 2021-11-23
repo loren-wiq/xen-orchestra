@@ -58,8 +58,11 @@ export interface Vm extends XapiObject {
   power_state: string
 }
 
+interface HostMetrics {
+  live: boolean
+}
 export interface Host extends XapiObject {
-  $pool: string
+  $metrics: HostMetrics
   name_label: string
   power_state: string
   resident_VMs: Array<string>
