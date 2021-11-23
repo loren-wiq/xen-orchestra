@@ -99,15 +99,16 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
         const { bondMode, description, mtu, nameLabel, pifsId, vlan } = this.state.form
 
         try {
-          await this.state.xapi.createNetwork(
+          await this.state.xapi.createNetworks([
             {
               MTU: +mtu,
               name_description: description,
               name_label: nameLabel,
               VLAN: +vlan,
+              bondMode: bondMode === '' ? undefined : bondMode,
+              pifsId: pifsId === '' ? undefined : pifsId,
             },
-            { bondMode: bondMode === '' ? undefined : bondMode, pifsId: pifsId === '' ? undefined : pifsId }
-          )
+          ])
           this.effects.resetForm()
         } catch (error) {
           console.error(error)
