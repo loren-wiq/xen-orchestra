@@ -63,6 +63,7 @@ const OPTION_PIF_RENDERER = (pif: Pif, { pifsMetrics }: { pifsMetrics: Computed[
 
 const INPUT_STYLES = {
   marginBottom: 2,
+  width: '20em',
 }
 
 const AddNetwork = withState<State, Props, Effects, Computed, ParentState, ParentEffects>(
@@ -106,7 +107,7 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
               name_label: nameLabel,
               VLAN: +vlan,
               bondMode: bondMode === '' ? undefined : bondMode,
-              pifsId: pifsId === '' ? undefined : pifsId,
+              pifsId: pifsId === '' ? undefined : Array.isArray(pifsId) ? pifsId : [pifsId],
             },
           ])
           this.effects.resetForm()
@@ -126,7 +127,6 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
         // element for the lifetime of the component.
         // More info: https://reactjs.org/link/controlled-components
         const { form } = this.state
-
         if (form[name] !== undefined) {
           this.state.form = {
             ...form,
@@ -153,55 +153,62 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
       },
     },
   },
-  ({ effects, state }) => (
-    <form onSubmit={effects.createNetwork}>
+  ({
+    effects: { createNetwork, handleChange, resetForm, toggleBonded },
+    state: { isBonded, isLoading, pifsMetrics, collection, form },
+  }) => (
+    <form
+      onSubmit={createNetwork}
+      style={{
+        width: '20em',
+      }}
+    >
       <label>
         <IntlMessage id='bondedNetwork' />
       </label>
-      <Checkbox checked={state.isBonded} name='bonded' onChange={effects.toggleBonded} />
+      <Checkbox checked={isBonded} name='bonded' onChange={toggleBonded} />
       <div>
         <label>
           <IntlMessage id='interface' />
         </label>
-        <br />
         <Select
-          additionalProps={{ pifsMetrics: state.pifsMetrics }}
-          multiple={state.isBonded}
+          additionalProps={{ pifsMetrics }}
+          multiple={isBonded}
           name='pifsId'
-          onChange={effects.handleChange}
+          onChange={handleChange}
           optionRenderer={OPTION_PIF_RENDERER}
-          options={state.collection}
-          required={state.isBonded}
+          options={collection}
+          required={isBonded}
           sx={INPUT_STYLES}
-          value={state.form.pifsId}
+          value={form.pifsId}
         />
       </div>
       <Input
         name='nameLabel'
-        onChange={effects.handleChange}
+        onChange={handleChange}
         required
-        value={state.form.nameLabel}
+        value={form.nameLabel}
         label={<IntlMessage id='name' />}
         sx={INPUT_STYLES}
       />
       <Input
         name='description'
-        onChange={effects.handleChange}
+        onChange={handleChange}
         type='text'
-        value={state.form.description}
+        value={form.description}
         label={<IntlMessage id='description' />}
         sx={INPUT_STYLES}
       />
       <Input
         name='mtu'
-        onChange={effects.handleChange}
+        onChange={handleChange}
         type='number'
-        value={state.form.mtu}
+        value={form.mtu}
         label={<IntlMessage id='mtu' />}
         sx={INPUT_STYLES}
         helperText={<IntlMessage id='defaultValue' values={{ value: 1500 }} />}
       />
-      {state.isBonded ? (
+      {isBonded ? (
         <div>
           <label>
             <IntlMessage id='bondMode' />
@@ -209,33 +216,28 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
           <br />
           <Select
             name='bondMode'
-            onChange={effects.handleChange}
+            onChange={handleChange}
             options={BOND_MODE}
             required
             sx={INPUT_STYLES}
-            value={state.form.bondMode}
+            value={form.bondMode}
           />
         </div>
       ) : (
         <Input
           name='vlan'
-          onChange={effects.handleChange}
+          onChange={handleChange}
           type='number'
-          value={state.form.vlan}
+          value={form.vlan}
           label={<IntlMessage id='vlan' />}
           sx={INPUT_STYLES}
           helperText={<IntlMessage id='vlanPlaceholder' />}
         />
       )}
-      <Button disabled={state.isLoading} type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
+      <Button disabled={isLoading} type='submit' color='success' startIcon={<AddIcon />} sx={BUTTON_STYLES}>
         <IntlMessage id='create' />
       </Button>
-      <Button
-        disabled={state.isLoading}
-        onClick={effects.resetForm}
-        sx={BUTTON_STYLES}
-        startIcon={<SettingsBackupRestoreIcon />}
-      >
+      <Button disabled={isLoading} onClick={resetForm} sx={BUTTON_STYLES} startIcon={<SettingsBackupRestoreIcon />}>
         <IntlMessage id='reset' />
       </Button>
     </form>

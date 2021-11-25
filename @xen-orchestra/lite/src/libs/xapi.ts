@@ -220,7 +220,7 @@ export default class XapiConnection extends EventEmitter {
         MTU: number
         name_description: string
         name_label: string
-        pifsId?: string | string[]
+        pifsId?: string[]
         VLAN: number
       }
     ]
@@ -228,7 +228,6 @@ export default class XapiConnection extends EventEmitter {
     const pifs = this.objectsByType.get('PIF')
     return Promise.all(
       newNetworks.map(async ({ bondMode, pifsId, ...newNetwork }) => {
-        const isBonded = Array.isArray(pifsId)
         let networkRef: string | undefined
         try {
           networkRef = (await this.call('network.create', {
@@ -236,14 +235,14 @@ export default class XapiConnection extends EventEmitter {
             other_config: { automatic: 'false' },
           })) as string
 
-          if (isBonded) {
+          if (bondMode !== undefined && pifsId !== undefined) {
             await Promise.all(
               pifsId.map(pifId => this.call('Bond.create', networkRef, pifs?.get(pifId)?.$network.PIFs, '', bondMode))
             )
             return
           }
           if (pifsId !== undefined) {
-            await this.call('pool.create_VLAN_from_PIF', pifs?.get(pifsId)?.$ref, networkRef, newNetwork.VLAN)
+            await this.call('pool.create_VLAN_from_PIF', pifs?.get(pifsId[0])?.$ref, networkRef, newNetwork.VLAN)
           }
         } catch (error) {
           if (networkRef !== undefined) {
