@@ -12,6 +12,7 @@ export interface XapiObject {
 
 // Dictionary of XAPI types and their corresponding TypeScript types
 interface types {
+  network: Network
   PIF: Pif
   PIF_metrics: PifMetrics
   pool: Pool
@@ -98,6 +99,7 @@ export default class XapiConnection extends EventEmitter {
     objects: EventEmitter & {
       all: { [id: string]: XapiObject }
     }
+    barrier: (ref: string) => Promise<void>
     connect(): Promise<void>
     disconnect(): Promise<void>
     call: (method: string, ...args: unknown[]) => Promise<unknown>
@@ -112,6 +114,14 @@ export default class XapiConnection extends EventEmitter {
     this.areObjectsFetched = new Promise(resolve => {
       this._resolveObjectsFetched = resolve
     })
+  }
+
+  barrier(ref: string): Promise<void> {
+    const { _xapi } = this
+    if (_xapi === undefined) {
+      throw new Error('Not connected to XAPI')
+    }
+    return _xapi.barrier(ref)
   }
 
   async reattachSession(url: string): Promise<void> {
@@ -224,7 +234,7 @@ export default class XapiConnection extends EventEmitter {
         VLAN: number
       }
     ]
-  ): Promise<void[]> {
+  ): Promise<(string | undefined)[]> {
     const pifs = this.objectsByType.get('PIF')
     return Promise.all(
       newNetworks.map(async ({ bondMode, pifsId, ...newNetwork }) => {
@@ -234,16 +244,20 @@ export default class XapiConnection extends EventEmitter {
             ...newNetwork,
             other_config: { automatic: 'false' },
           })) as string
+          await this.barrier(networkRef)
+          const networkId = this.objectsByType.get('network')?.find(({ $ref }) => $ref === networkRef)?.$id
 
+          if (pifsId === undefined) {
+            return networkId
+          }
           if (bondMode !== undefined && pifsId !== undefined) {
             await Promise.all(
               pifsId.map(pifId => this.call('Bond.create', networkRef, pifs?.get(pifId)?.$network.PIFs, '', bondMode))
             )
-            return
-          }
-          if (pifsId !== undefined) {
+          } else {
             await this.call('pool.create_VLAN_from_PIF', pifs?.get(pifsId[0])?.$ref, networkRef, newNetwork.VLAN)
           }
+          return networkId
         } catch (error) {
           if (networkRef !== undefined) {
             await this.call('network.destroy', networkRef)
