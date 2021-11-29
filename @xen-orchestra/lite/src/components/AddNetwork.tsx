@@ -54,7 +54,7 @@ interface Computed {
 const BOND_MODE = ['active-backup', 'balance-slb', 'lacp']
 
 const BUTTON_STYLES = {
-  marginRight: 1,
+  marginRight: '1em',
   width: 'fit-content',
 }
 
@@ -62,8 +62,8 @@ const OPTION_PIF_RENDERER = (pif: Pif, { pifsMetrics }: { pifsMetrics: Computed[
   `${pif.device} (${pifsMetrics?.find(metrics => metrics.$ref === pif.metrics)?.device_name ?? 'unknown'})`
 
 const INPUT_STYLES = {
-  marginBottom: 2,
-  width: '20em',
+  marginBottom: '1em',
+  width: '100%',
 }
 
 const AddNetwork = withState<State, Props, Effects, Computed, ParentState, ParentEffects>(
@@ -93,6 +93,9 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
     effects: {
       createNetwork: async function (e) {
         e.preventDefault()
+        // FIXME:
+        // Loading state will be handled by ActionButton in the future
+        // We should remove this when ActionButton is created
         if (this.state.isLoading) {
           return
         }
@@ -136,20 +139,14 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
       },
       resetForm: function () {
         this.state.isBonded = false
-        Object.keys(this.state.form).forEach(property => {
-          this.state.form = {
-            ...this.state.form,
-            [property]: '',
-          }
-        })
+        const form: { [key: string]: unknown } = {}
+        Object.keys(this.state.form).forEach(property => (form[property] = ''))
+        this.state.form = form as State['form']
       },
       toggleBonded: function () {
-        if (Array.isArray(this.state.form.pifsId)) {
-          this.state.form.pifsId = ''
-        } else {
-          this.state.form.pifsId = []
-        }
         this.state.isBonded = !this.state.isBonded
+        // In bonded network case, we need an array to send severale pif id
+        this.state.form.pifsId = this.state.isBonded ? [] : ''
       },
     },
   },
@@ -173,13 +170,13 @@ const AddNetwork = withState<State, Props, Effects, Computed, ParentState, Paren
         </label>
         <Select
           additionalProps={{ pifsMetrics }}
+          containerStyle={INPUT_STYLES}
           multiple={isBonded}
           name='pifsId'
           onChange={handleChange}
           optionRenderer={OPTION_PIF_RENDERER}
           options={collection}
           required={isBonded}
-          sx={INPUT_STYLES}
           value={form.pifsId}
         />
       </div>
