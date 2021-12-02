@@ -28,7 +28,7 @@ interface ParentEffects {}
 interface Effects {
   onChangeSelect: (e: SelectChangeEvent<unknown>) => void
   sayHello: () => void
-  sendPromise: (e: React.MouseEvent, data?: { [key: string]: unknown }) => Promise<void>
+  sendPromise: (data: Record<string, unknown>) => Promise<void>
 }
 
 interface Computed {}
@@ -68,17 +68,30 @@ const App = withState<State, Props, Effects, Computed, ParentState, ParentEffect
         this.state.value = e.target.value
       },
       sayHello: () => alert('hello'),
-      sendPromise: (_, data = {}) =>
+      sendPromise: data =>
         new Promise(resolve => {
           setTimeout(() => {
             resolve()
-            window.alert(data.something)
+            window.alert(data.foo)
           }, 1000)
         }),
     },
   },
   ({ effects, state }) => (
     <Page>
+      <h2>Action button</h2>
+      <Container>
+        <Render>
+          <ActionButton data-foo='forwarded data props' onClick={effects.sendPromise}>
+            Send promise
+          </ActionButton>
+        </Render>
+        <Code>
+          {`<ActionButton data-foo='forwarded data props' onClick={effects.sendPromise}>
+  Send promise
+</ActionButton>`}
+        </Code>
+      </Container>
       <h2>Button</h2>
       <Container>
         <Render>
@@ -119,19 +132,6 @@ const App = withState<State, Props, Effects, Computed, ParentState, ParentEffect
 <Button color='info' onClick={doSomething}>
   Info
 </Button>`}</Code>
-      </Container>
-      <h2>Action button</h2>
-      <Container>
-        <Render>
-          <ActionButton data-something='data props forwarded' onClick={effects.sendPromise}>
-            Send promise
-          </ActionButton>
-        </Render>
-        <Code>
-          {`<ActionButton data-something='data props forwarded' onClick={effects.sendPromise}>
-  Send promise
-</ActionButton>`}
-        </Code>
       </Container>
       <h2>Icon</h2>
       <Container>
