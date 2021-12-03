@@ -13,6 +13,7 @@
 
 - [Tables/actions] Fix collapsed actions being clickable despite being disabled (PR [#6023](https://github.com/vatesfr/xen-orchestra/pull/6023))
 - [Backup] Fix `handler.rmTree` is not a function (Forum [5256](https://xcp-ng.org/forum/topic/5256/s3-backup-try-it/29) PR [#6041](https://github.com/vatesfr/xen-orchestra/pull/6041) )
+- [Backup] remove incorrect size warning following a merge [Forum #5727](https://xcp-ng.org/forum/topic/4769/warnings-showing-in-system-logs-following-each-backup-job/4) (PR [#6010](https://github.com/vatesfr/xen-orchestra/pull/6010))
 
 ### Packages to release
 
@@ -33,6 +34,7 @@
 
 - @xen-orchestra/fs patch
 - vhd-lib patch
+- @xen-orchestra/backups minor
 - xo-server patch
 - @xen-orchestra/proxy patch
 - xo-web patch
