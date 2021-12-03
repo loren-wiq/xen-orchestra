@@ -72,12 +72,12 @@ export interface Vm extends XapiObject {
   name_description: string
   name_label: string
   power_state: string
+  resident_on: string
 }
 
 export interface Host extends XapiObject {
   name_label: string
   power_state: string
-  resident_VMs: Array<string>
 }
 
 // --------
