@@ -1,7 +1,7 @@
 const assert = require('assert')
 const sum = require('lodash/sum')
 const { asyncMap } = require('@xen-orchestra/async-map')
-const { Constants, mergeVhd, openVhd, VhdAbstract, VhdFile } = require('vhd-lib')
+const { Constants, isVhdAlias, mergeVhd, openVhd, VhdAbstract, VhdFile, resolveAlias } = require('vhd-lib')
 const { dirname, resolve } = require('path')
 const { DISK_TYPES } = Constants
 const { isMetadataFile, isVhdFile, isXvaFile, isXvaSumFile } = require('./_backupType.js')
@@ -64,6 +64,7 @@ async function mergeVhdChain(chain, { handler, onLog, remove, merge }) {
     )
 
     clearInterval(handle)
+    onLog(`merging ${child} into ${parent} done`)
 
     await Promise.all([
       VhdAbstract.rename(handler, parent, child),
@@ -85,6 +86,7 @@ const noop = Function.prototype
 const INTERRUPTED_VHDS_REG = /^(?:(.+)\/)?\.(.+)\.merge.json$/
 const listVhds = async (handler, vmDir) => {
   const vhds = []
+  const aliases = {}
   const interruptedVhds = new Set()
 
   await asyncMap(
@@ -102,7 +104,7 @@ const listVhds = async (handler, vmDir) => {
             filter: file => isVhdFile(file) || INTERRUPTED_VHDS_REG.test(file),
             prependDir: true,
           })
-
+          aliases[vdiDir] = list.filter(vhd => isVhdAlias(vhd))
           list.forEach(file => {
             const res = INTERRUPTED_VHDS_REG.exec(file)
             if (res === null) {
@@ -116,8 +118,51 @@ const listVhds = async (handler, vmDir) => {
       )
   )
 
-  return { vhds, interruptedVhds }
+  return { vhds, interruptedVhds, aliases }
 }
+
+async function checkAliases(aliasPaths, targetDataRepository, { handler, onLog = noop, remove = false }) {
+  const aliasFound = []
+  for (const path of aliasPaths) {
+    const target = await resolveAlias(handler, path)
+
+    if (!isVhdFile(target)) {
+      onLog(`Alias ${path} references a non vhd target:  ${target}`)
+      if (remove) {
+        await handler.unlink(target)
+        await handler.unlink(path)
+      }
+      continue
+    }
+
+    try {
+      await openVhd(handler, target)
+    } catch (e) {
+      onLog(`target ${target} of alias ${path} is missing or broken`)
+      if (remove) {
+        await VhdAbstract.unlink(handler, path)
+      }
+      continue
+    }
+
+    aliasFound.push(resolve('/', target))
+  }
+
+  const entries = await handler.list(targetDataRepository, {
+    ignoreMissing: true,
+    prependDir: true,
+  })
+
+  entries.forEach(async entry => {
+    if (!aliasFound.includes(entry)) {
+      onLog(`the Vhd  ${entry} is not referenced by a an alias`)
+      if (remove) {
+        await VhdAbstract.unlink(handler, entry)
+      }
+    }
+  })
+}
+exports.checkAliases = checkAliases
 
 const defaultMergeLimiter = limitConcurrency(1)
 
@@ -161,8 +206,12 @@ exports.cleanVm = async function cleanVm(
       }
     }
   })
-
-  // @todo : add check for data folder of alias not referenced in a valid alias
+  // check if alias are correct
+  // check if all vhd in data subfolder have a corresponding alias
+  await asyncMap(Object.keys(vhdsList.aliases), async dir => {
+    const aliases = vhdsList.aliases[dir]
+    await checkAliases(aliases, `${dir}/data`, { handler, onLog, remove })
+  })
 
   // remove VHDs with missing ancestors
   {

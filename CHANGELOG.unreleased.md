@@ -7,6 +7,8 @@
 
 > Users must be able to say: “Nice enhancement, I'm eager to test it”
 
+- [Backup] Add sanity check of alias after backup. PR [6043](https://github.com/vatesfr/xen-orchestra/pull/6043)
+
 ### Bug fixes
 
 > Users must be able to say: “I had this issue, happy to know it's fixed”
@@ -33,6 +35,7 @@
 
 - @xen-orchestra/fs patch
 - vhd-lib patch
+- @xen-orchestra/backups minor
 - xo-server patch
 - @xen-orchestra/proxy patch
 - xo-web patch
