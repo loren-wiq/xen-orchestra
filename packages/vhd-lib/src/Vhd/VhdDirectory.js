@@ -114,8 +114,17 @@ export class VhdDirectory extends VhdAbstract {
   }
 
   async readHeaderAndFooter() {
-    const { buffer: bufHeader } = await this._readChunk('header')
-    const { buffer: bufFooter } = await this._readChunk('footer')
+    let bufHeader, bufFooter
+    try {
+      bufHeader = (await this._readChunk('header')).buffer
+      bufFooter = (await this._readChunk('footer')).buffer
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        assert(false, 'Header And Footer should exists')
+      } else {
+        throw error
+      }
+    }
     const footer = unpackFooter(bufFooter)
     const header = unpackHeader(bufHeader, footer)
 
